@@ -30,29 +30,29 @@ pub fn next_token(lexer: Lexer) -> UpdatedLexer(Token) {
     let lexer = lexer |> skip_whitespace
 
     case lexer.current_ch {
-        "=" -> with_static_token(token.assign, lexer)
-        "+" -> with_static_token(token.plus, lexer)
-        "(" -> with_static_token(token.l_paren, lexer)
-        ")" -> with_static_token(token.r_paren, lexer)
-        "{" -> with_static_token(token.l_brace, lexer)
-        "}" -> with_static_token(token.r_brace, lexer)
-        "," -> with_static_token(token.comma, lexer)
-        ";" -> with_static_token(token.semicolon, lexer)
-        "" -> with_static_token(token.eof, lexer)
+        "=" -> create_static_updated_lexer(token.assign, lexer)
+        "+" -> create_static_updated_lexer(token.plus, lexer)
+        "(" -> create_static_updated_lexer(token.l_paren, lexer)
+        ")" -> create_static_updated_lexer(token.r_paren, lexer)
+        "{" -> create_static_updated_lexer(token.l_brace, lexer)
+        "}" -> create_static_updated_lexer(token.r_brace, lexer)
+        "," -> create_static_updated_lexer(token.comma, lexer)
+        ";" -> create_static_updated_lexer(token.semicolon, lexer)
+        "" -> create_static_updated_lexer(token.eof, lexer)
         v -> case v |> string_ext.is_letter {
             True -> {
                 let updated_lexer = lexer |> read_ident
 
-                UpdatedLexer(Token(token.lookup_identifier(updated_lexer.data), updated_lexer.data), updated_lexer.lexer)
+                create_updated_lexer(token.lookup_identifier(updated_lexer.data), updated_lexer)
             }
             False -> {
                 case v |> string_ext.is_digit {
                     True -> {
                         let updated_lexer = lexer |> read_number
-                        UpdatedLexer(Token(token.int, updated_lexer.data), updated_lexer.lexer)
+                        create_updated_lexer(token.int, updated_lexer)
                     } 
                     False -> {
-                        with_static_token(token.illegal, lexer)
+                        create_static_updated_lexer(token.illegal, lexer)
                     }
                 }
                 
@@ -61,7 +61,11 @@ pub fn next_token(lexer: Lexer) -> UpdatedLexer(Token) {
     }
 }
 
-fn with_static_token(token_type: TokenType, lexer: Lexer) -> UpdatedLexer(Token) {
+fn create_updated_lexer(token_type: TokenType, lexer: UpdatedLexer(String)) -> UpdatedLexer(Token) {
+    UpdatedLexer(Token(token_type, lexer.data), lexer.lexer)
+}
+
+fn create_static_updated_lexer(token_type: TokenType, lexer: Lexer) -> UpdatedLexer(Token) {
     UpdatedLexer(Token(token_type, lexer.current_ch), lexer |> read_char())
 }
 
