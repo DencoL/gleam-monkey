@@ -43,7 +43,7 @@ pub fn next_token(lexer: Lexer) -> UpdatedLexer(Token) {
             True -> {
                 let updated_lexer = lexer |> read_ident
 
-                UpdatedLexer(Token(lookup_ident(updated_lexer.data), updated_lexer.data), updated_lexer.lexer)
+                UpdatedLexer(Token(token.lookup_identifier(updated_lexer.data), updated_lexer.data), updated_lexer.lexer)
             }
             False -> {
                 case v |> string_ext.is_digit {
@@ -63,14 +63,6 @@ pub fn next_token(lexer: Lexer) -> UpdatedLexer(Token) {
 
 fn with_static_token(token_type: TokenType, lexer: Lexer) -> UpdatedLexer(Token) {
     UpdatedLexer(Token(token_type, lexer.current_ch), lexer |> read_char())
-}
-
-fn lookup_ident(ident: String) -> TokenType {
-    case ident {
-        "let" -> token.var
-        "fn" -> token.func
-        _ -> token.ident
-    }
 }
 
 fn skip_whitespace(lexer: Lexer) -> Lexer {

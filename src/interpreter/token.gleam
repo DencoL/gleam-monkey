@@ -21,3 +21,11 @@ pub const int = TokenType("int")
 pub const func = TokenType("func")
 
 pub const illegal = TokenType("illegal")
+
+pub fn lookup_identifier(identifier: String) -> TokenType {
+    case identifier {
+        "let" -> var
+        "fn" -> func
+        _ -> ident
+    }
+}
