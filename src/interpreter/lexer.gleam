@@ -9,6 +9,10 @@ pub type Lexer {
     Lexer(input: List(String), position: Int, read_position: Int, current_ch: String)
 }
 
+pub type UpdatedLexer(data) {
+    UpdatedLexer(data: data, lexer: Lexer)
+}
+
 pub fn new(input: String) -> Lexer {
     Lexer(input: input |> string.split(on: ""), position: 0, read_position: 0, current_ch: "") |> read_char
 }
@@ -22,7 +26,7 @@ fn read_char(lexer: Lexer) -> Lexer {
     Lexer(..lexer, position: lexer.read_position, read_position: lexer.read_position + 1, current_ch: new_current_ch)
 }
 
-pub fn next_token(lexer: Lexer) -> #(Token, Lexer) {
+pub fn next_token(lexer: Lexer) -> UpdatedLexer(Token) {
     let lexer = lexer |> skip_whitespace
 
     case lexer.current_ch {
@@ -37,15 +41,15 @@ pub fn next_token(lexer: Lexer) -> #(Token, Lexer) {
         "" -> with_static_token(token.eof, lexer)
         v -> case v |> string_ext.is_letter {
             True -> {
-                let #(identifier, new_lexer) = lexer |> read_ident
+                let updated_lexer = lexer |> read_ident
 
-                #(Token(lookup_ident(identifier), identifier), new_lexer)
+                UpdatedLexer(Token(lookup_ident(updated_lexer.data), updated_lexer.data), updated_lexer.lexer)
             }
             False -> {
                 case v |> string_ext.is_digit {
                     True -> {
-                        let #(number, new_lexer) = lexer |> read_number
-                        #(Token(token.int, number), new_lexer)
+                        let updated_lexer = lexer |> read_number
+                        UpdatedLexer(Token(token.int, updated_lexer.data), updated_lexer.lexer)
                     } 
                     False -> {
                         with_static_token(token.illegal, lexer)
@@ -57,8 +61,8 @@ pub fn next_token(lexer: Lexer) -> #(Token, Lexer) {
     }
 }
 
-fn with_static_token(token_type: TokenType, lexer: Lexer) -> #(Token, Lexer) {
-    #(Token(token_type, lexer.current_ch), lexer |> read_char())
+fn with_static_token(token_type: TokenType, lexer: Lexer) -> UpdatedLexer(Token) {
+    UpdatedLexer(Token(token_type, lexer.current_ch), lexer |> read_char())
 }
 
 fn lookup_ident(ident: String) -> TokenType {
@@ -83,15 +87,15 @@ fn skip_whitespace(lexer: Lexer) -> Lexer {
     lexer |> adapt_to_position(new_position)
 }
 
-fn read_ident(lexer: Lexer) -> #(String, Lexer) {
+fn read_ident(lexer: Lexer) -> UpdatedLexer(String) {
     lexer |> read_atom(string_ext.is_letter)
 }
 
-fn read_number(lexer: Lexer) -> #(String, Lexer) {
+fn read_number(lexer: Lexer) -> UpdatedLexer(String) {
     lexer |> read_atom(string_ext.is_digit)
 }
 
-fn read_atom(lexer: Lexer, identify_atom: fn(String) -> Bool) -> #(String, Lexer) {
+fn read_atom(lexer: Lexer, identify_atom: fn(String) -> Bool) -> UpdatedLexer(String) {
     let final_identifier_builder =
         lexer.input
         |> list.drop(lexer.position)
@@ -104,7 +108,7 @@ fn read_atom(lexer: Lexer, identify_atom: fn(String) -> Bool) -> #(String, Lexer
     
     let final_identifier = final_identifier_builder |> string_builder.to_string
 
-    #(final_identifier, lexer |> adapt_to_position(lexer.position + string.length(final_identifier)))
+    UpdatedLexer(final_identifier, lexer |> adapt_to_position(lexer.position + string.length(final_identifier)))
 }
 
 fn adapt_to_position(lexer: Lexer, position: Int) -> Lexer {
@@ -112,5 +116,7 @@ fn adapt_to_position(lexer: Lexer, position: Int) -> Lexer {
 }
 
 fn char_at(lexer: Lexer, position: Int) -> String {
-    lexer.input |> list.at(position) |> result.unwrap("")
+    lexer.input
+    |> list.at(position)
+    |> result.unwrap("")
 }

@@ -85,10 +85,11 @@ let result = add(five, ten);"
 }
 
 fn test_case(lexer: Lexer, test_case: LexerTest) -> Lexer {
-    let #(actual_token, next_lexer) = lexer |> lexer.next_token()
+    let updated_lexer = lexer |> lexer.next_token()
+    let actual_token = updated_lexer.data
 
     actual_token.literal |> should.equal(test_case.expected_literal)
     actual_token.token_type |> should.equal(test_case.expected_token_type)
 
-    next_lexer
+    updated_lexer.lexer
 }
