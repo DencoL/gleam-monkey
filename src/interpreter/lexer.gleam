@@ -2,7 +2,7 @@ import gleam/list.{Continue, Stop}
 import gleam/string
 import gleam/result
 import gleam/string_builder
-import interpreter/token.{type Token, Token, type TokenType, keyword_token_types}
+import interpreter/token.{type Token, Token, type TokenType, lookup_keyword_token}
 import string_ext/string_ext
 
 pub type Lexer {
@@ -29,32 +29,45 @@ fn read_char(lexer: Lexer) -> Lexer {
 pub fn next_token(lexer: Lexer) -> UpdatedLexer(Token) {
     let lexer = lexer |> skip_whitespace
 
-    keyword_token_types |> list.find(fn(token_type) { token_type.value == lexer.current_ch }) 
-    |> result.map(fn(found_keyword_token) { create_static_updated_lexer(found_keyword_token, lexer) })
+    lexer.current_ch
+    |> lookup_keyword_token
+    |> try_keyword_token(lexer)
+    |> try_token(read_ident, fn(identifier) { token.lookup_identifier(identifier) }, lexer)
+    |> try_token(read_number, fn(_) { token.int }, lexer)
+    |> eof_or_illegal(lexer)
+}
+
+fn try_keyword_token(keyword_token_result: Result(TokenType, Nil), lexer: Lexer) -> Result(UpdatedLexer(Token), Nil) {
+    keyword_token_result 
+    |> result.map(fn(found_keyword_token_type) {
+        UpdatedLexer(Token(found_keyword_token_type, lexer.current_ch), lexer |> read_char())
+    })
+}
+
+fn try_token(
+    failed_keyword_token_result: Result(UpdatedLexer(Token), Nil),
+    token_identify_fun: fn(Lexer) -> Result(UpdatedLexer(String), Nil),
+    lookup_identifier: fn(String) -> TokenType,
+    lexer: Lexer
+) -> Result(UpdatedLexer(Token), Nil) {
+    failed_keyword_token_result
     |> result.try_recover(fn(_) {
         lexer
-        |> read_ident
-        |> result.map(fn(updated_lexer) { create_updated_lexer(token.lookup_identifier(updated_lexer.data), updated_lexer) })
+        |> token_identify_fun
+        |> result.map(fn(updated_lexer) { 
+            UpdatedLexer(Token(lookup_identifier(updated_lexer.data), updated_lexer.data), updated_lexer.lexer)
+        })
     })
-    |> result.try_recover(fn(_) {
-        lexer
-        |> read_number
-        |> result.map(fn(updated_lexer) { create_updated_lexer(token.int, updated_lexer) })
-    })
+}
+
+fn eof_or_illegal(failed_result: Result(UpdatedLexer(Token), Nil), lexer: Lexer) -> UpdatedLexer(Token) {
+    failed_result
     |> result.lazy_unwrap(fn() {
         case lexer.current_ch {
             "" -> UpdatedLexer(Token(token.eof, ""), lexer |> read_char)
             _ -> UpdatedLexer(Token(token.illegal, lexer.current_ch), lexer |> read_char)
         }
     })
-}
-
-fn create_updated_lexer(token_type: TokenType, lexer: UpdatedLexer(String)) -> UpdatedLexer(Token) {
-    UpdatedLexer(Token(token_type, lexer.data), lexer.lexer)
-}
-
-fn create_static_updated_lexer(token_type: TokenType, lexer: Lexer) -> UpdatedLexer(Token) {
-    UpdatedLexer(Token(token_type, lexer.current_ch), lexer |> read_char())
 }
 
 fn skip_whitespace(lexer: Lexer) -> Lexer {

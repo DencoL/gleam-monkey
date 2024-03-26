@@ -1,3 +1,5 @@
+import gleam/list
+
 pub type TokenType {
     TokenType(value: String)
 }
@@ -22,7 +24,7 @@ pub const func = TokenType("func")
 pub const ident = TokenType("ident")
 pub const illegal = TokenType("illegal")
 
-pub const keyword_token_types = [
+const keyword_token_types = [
     eof,
     assign,
     plus,
@@ -43,4 +45,8 @@ pub fn lookup_identifier(identifier: String) -> TokenType {
         "fn" -> func
         _ -> ident
     }
+}
+
+pub fn lookup_keyword_token(token: String) -> Result(TokenType, Nil) {
+    keyword_token_types |> list.find(fn(token_type) { token_type.value == token }) 
 }
