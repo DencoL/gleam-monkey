@@ -13,7 +13,7 @@ type LexerTest {
 }
 
 pub fn next_token_1_test() {
-    let input = "=+(){},;"
+    let input = "=+(){},;#"
 
     let tests = [
         LexerTest(token.assign, "="),
@@ -24,7 +24,8 @@ pub fn next_token_1_test() {
         LexerTest(token.r_brace, "}"),
         LexerTest(token.comma, ","),
         LexerTest(token.semicolon, ";"),
-        LexerTest(token.eof, "")
+        LexerTest(token.illegal, "#"),
+        LexerTest(token.eof, ""),
     ]
 
     tests
