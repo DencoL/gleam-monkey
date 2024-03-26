@@ -2,7 +2,7 @@ import gleam/list.{Continue, Stop}
 import gleam/string
 import gleam/result
 import gleam/string_builder
-import interpreter/token.{type Token, Token, type TokenType}
+import interpreter/token.{type Token, Token, type TokenType, keyword_token_types}
 import string_ext/string_ext
 
 pub type Lexer {
@@ -29,36 +29,24 @@ fn read_char(lexer: Lexer) -> Lexer {
 pub fn next_token(lexer: Lexer) -> UpdatedLexer(Token) {
     let lexer = lexer |> skip_whitespace
 
-    case lexer.current_ch {
-        "=" -> create_static_updated_lexer(token.assign, lexer)
-        "+" -> create_static_updated_lexer(token.plus, lexer)
-        "(" -> create_static_updated_lexer(token.l_paren, lexer)
-        ")" -> create_static_updated_lexer(token.r_paren, lexer)
-        "{" -> create_static_updated_lexer(token.l_brace, lexer)
-        "}" -> create_static_updated_lexer(token.r_brace, lexer)
-        "," -> create_static_updated_lexer(token.comma, lexer)
-        ";" -> create_static_updated_lexer(token.semicolon, lexer)
-        "" -> create_static_updated_lexer(token.eof, lexer)
-        v -> case v |> string_ext.is_letter {
-            True -> {
-                let updated_lexer = lexer |> read_ident
-
-                create_updated_lexer(token.lookup_identifier(updated_lexer.data), updated_lexer)
-            }
-            False -> {
-                case v |> string_ext.is_digit {
-                    True -> {
-                        let updated_lexer = lexer |> read_number
-                        create_updated_lexer(token.int, updated_lexer)
-                    } 
-                    False -> {
-                        create_static_updated_lexer(token.illegal, lexer)
-                    }
-                }
-                
-            }
+    keyword_token_types |> list.find(fn(token_type) { token_type.value == lexer.current_ch }) 
+    |> result.map(fn(found_keyword_token) { create_static_updated_lexer(found_keyword_token, lexer) })
+    |> result.try_recover(fn(_) {
+        lexer
+        |> read_ident
+        |> result.map(fn(updated_lexer) { create_updated_lexer(token.lookup_identifier(updated_lexer.data), updated_lexer) })
+    })
+    |> result.try_recover(fn(_) {
+        lexer
+        |> read_number
+        |> result.map(fn(updated_lexer) { create_updated_lexer(token.int, updated_lexer) })
+    })
+    |> result.lazy_unwrap(fn() {
+        case lexer.current_ch {
+            "" -> UpdatedLexer(Token(token.eof, ""), lexer |> read_char)
+            _ -> UpdatedLexer(Token(token.illegal, lexer.current_ch), lexer |> read_char)
         }
-    }
+    })
 }
 
 fn create_updated_lexer(token_type: TokenType, lexer: UpdatedLexer(String)) -> UpdatedLexer(Token) {
@@ -83,15 +71,15 @@ fn skip_whitespace(lexer: Lexer) -> Lexer {
     lexer |> adapt_to_position(new_position)
 }
 
-fn read_ident(lexer: Lexer) -> UpdatedLexer(String) {
+fn read_ident(lexer: Lexer) -> Result(UpdatedLexer(String), Nil) {
     lexer |> read_continuous(string_ext.is_letter)
 }
 
-fn read_number(lexer: Lexer) -> UpdatedLexer(String) {
+fn read_number(lexer: Lexer) -> Result(UpdatedLexer(String), Nil) {
     lexer |> read_continuous(string_ext.is_digit)
 }
 
-fn read_continuous(lexer: Lexer, identify_continuity: fn(String) -> Bool) -> UpdatedLexer(String) {
+fn read_continuous(lexer: Lexer, identify_continuity: fn(String) -> Bool) -> Result(UpdatedLexer(String), Nil) {
     let final_identifier_builder =
         lexer.input
         |> list.drop(lexer.position)
@@ -102,9 +90,14 @@ fn read_continuous(lexer: Lexer, identify_continuity: fn(String) -> Bool) -> Upd
             }
     })
     
-    let final_identifier = final_identifier_builder |> string_builder.to_string
+    case final_identifier_builder |> string_builder.is_empty {
+        True -> Error(Nil)
+        False -> {
+            let final_identifier = final_identifier_builder |> string_builder.to_string
 
-    UpdatedLexer(final_identifier, lexer |> adapt_to_position(lexer.position + string.length(final_identifier)))
+            Ok(UpdatedLexer(final_identifier, lexer |> adapt_to_position(lexer.position + string.length(final_identifier))))
+        }
+    }
 }
 
 fn adapt_to_position(lexer: Lexer, position: Int) -> Lexer {

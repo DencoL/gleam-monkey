@@ -16,11 +16,26 @@ pub const r_brace = TokenType("}")
 pub const comma = TokenType(",")
 pub const semicolon = TokenType(";")
 pub const var = TokenType("let")
-pub const ident = TokenType("ident")
 pub const int = TokenType("int")
 pub const func = TokenType("func")
 
+pub const ident = TokenType("ident")
 pub const illegal = TokenType("illegal")
+
+pub const keyword_token_types = [
+    eof,
+    assign,
+    plus,
+    l_paren,
+    r_paren,
+    l_brace,
+    r_brace,
+    comma,
+    semicolon,
+    var,
+    int,
+    func
+]
 
 pub fn lookup_identifier(identifier: String) -> TokenType {
     case identifier {
