@@ -84,19 +84,19 @@ fn skip_whitespace(lexer: Lexer) -> Lexer {
 }
 
 fn read_ident(lexer: Lexer) -> UpdatedLexer(String) {
-    lexer |> read_atom(string_ext.is_letter)
+    lexer |> read_continuous(string_ext.is_letter)
 }
 
 fn read_number(lexer: Lexer) -> UpdatedLexer(String) {
-    lexer |> read_atom(string_ext.is_digit)
+    lexer |> read_continuous(string_ext.is_digit)
 }
 
-fn read_atom(lexer: Lexer, identify_atom: fn(String) -> Bool) -> UpdatedLexer(String) {
+fn read_continuous(lexer: Lexer, identify_continuity: fn(String) -> Bool) -> UpdatedLexer(String) {
     let final_identifier_builder =
         lexer.input
         |> list.drop(lexer.position)
         |> list.fold_until(string_builder.new(), fn(acc, char) {
-            case char |> identify_atom {
+            case char |> identify_continuity {
                 True -> Continue(acc |> string_builder.append(char))
                 False -> Stop(acc) 
             }
