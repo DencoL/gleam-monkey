@@ -2,7 +2,7 @@ import gleam/list.{Continue, Stop}
 import gleam/string
 import gleam/result
 import gleam/string_builder
-import interpreter/token.{type Token, Token, type TokenType, lookup_keyword_token}
+import interpreter/token.{type Token, Token, type TokenType}
 import string_ext/string_ext
 
 pub type Lexer {
@@ -30,11 +30,25 @@ pub fn next_token(lexer: Lexer) -> UpdatedLexer(Token) {
     let lexer = lexer |> skip_whitespace
 
     lexer.current_ch
-    |> lookup_keyword_token
+    |> token.find_keyword_token
     |> try_keyword_token(lexer)
-    |> try_token(read_ident, fn(identifier) { token.lookup_identifier(identifier) }, lexer)
+    |> try_token(read_ident, fn(identifier) { token.find_identifier(identifier) }, lexer)
     |> try_token(read_number, fn(_) { token.int }, lexer)
     |> eof_or_illegal(lexer)
+}
+
+fn skip_whitespace(lexer: Lexer) -> Lexer {
+    let new_position =
+        lexer.input
+        |> list.drop(lexer.position)
+        |> list.fold_until(lexer.position, fn(acc, char) {
+            case char |> string_ext.is_whitespace {
+                True -> Continue(acc + 1)
+                False -> Stop(acc) 
+            }
+    })
+
+    lexer |> adapt_to_position(new_position)
 }
 
 fn try_keyword_token(keyword_token_result: Result(TokenType, Nil), lexer: Lexer) -> Result(UpdatedLexer(Token), Nil) {
@@ -68,20 +82,6 @@ fn eof_or_illegal(failed_result: Result(UpdatedLexer(Token), Nil), lexer: Lexer)
             _ -> UpdatedLexer(Token(token.illegal, lexer.current_ch), lexer |> read_char)
         }
     })
-}
-
-fn skip_whitespace(lexer: Lexer) -> Lexer {
-    let new_position =
-        lexer.input
-        |> list.drop(lexer.position)
-        |> list.fold_until(lexer.position, fn(acc, char) {
-            case char |> string_ext.is_whitespace {
-                True -> Continue(acc + 1)
-                False -> Stop(acc) 
-            }
-    })
-
-    lexer |> adapt_to_position(new_position)
 }
 
 fn read_ident(lexer: Lexer) -> Result(UpdatedLexer(String), Nil) {

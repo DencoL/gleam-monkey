@@ -39,7 +39,7 @@ const keyword_token_types = [
     func
 ]
 
-pub fn lookup_identifier(identifier: String) -> TokenType {
+pub fn find_identifier(identifier: String) -> TokenType {
     case identifier {
         "let" -> var
         "fn" -> func
@@ -47,6 +47,6 @@ pub fn lookup_identifier(identifier: String) -> TokenType {
     }
 }
 
-pub fn lookup_keyword_token(token: String) -> Result(TokenType, Nil) {
+pub fn find_keyword_token(token: String) -> Result(TokenType, Nil) {
     keyword_token_types |> list.find(fn(token_type) { token_type.value == token }) 
 }
