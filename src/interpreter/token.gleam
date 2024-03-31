@@ -30,8 +30,7 @@ pub const gt = TokenType(">")
 pub const ident = TokenType("ident")
 pub const illegal = TokenType("illegal")
 
-const keyword_token_types = [
-    eof,
+const atomics = [
     assign,
     plus,
     l_paren,
@@ -40,15 +39,19 @@ const keyword_token_types = [
     r_brace,
     comma,
     semicolon,
-    var,
     int,
-    func,
     bang,
     minus,
     slash,
     asterisk,
     lt,
     gt
+]
+
+const keyword_token_types = [
+    eof,
+    var,
+    func
 ]
 
 pub fn find_identifier(identifier: String) -> TokenType {
@@ -60,5 +63,7 @@ pub fn find_identifier(identifier: String) -> TokenType {
 }
 
 pub fn find_keyword_token(token: String) -> Result(TokenType, Nil) {
-    keyword_token_types |> list.find(fn(token_type) { token_type.value == token }) 
+    keyword_token_types
+    |> list.append(atomics)
+    |> list.find(fn(token_type) { token_type.value == token }) 
 }
