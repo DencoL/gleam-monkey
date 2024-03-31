@@ -77,11 +77,14 @@ fn try_token(
 fn eof_or_illegal(failed_result: Result(UpdatedLexer(Token), Nil), lexer: Lexer) -> UpdatedLexer(Token) {
     failed_result
     |> result.lazy_unwrap(fn() {
-        case lexer.current_ch {
-            "" -> UpdatedLexer(Token(token.eof, ""), lexer |> read_char)
-            _ -> UpdatedLexer(Token(token.illegal, lexer.current_ch), lexer |> read_char)
+        let token = case lexer.current_ch {
+            "" -> Token(token.eof, "")
+            _ -> Token(token.illegal, lexer.current_ch)
         }
+
+        UpdatedLexer(token, lexer |> read_char)
     })
+
 }
 
 fn read_ident(lexer: Lexer) -> Result(UpdatedLexer(String), Nil) {
