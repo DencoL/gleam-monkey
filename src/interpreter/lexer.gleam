@@ -107,8 +107,9 @@ fn read_continuous(lexer: Lexer, identify_continuity: fn(String) -> Bool) -> Res
         True -> Error(Nil)
         False -> {
             let final_identifier = final_identifier_builder |> string_builder.to_string
+            let new_position = lexer.position + string.length(final_identifier)
 
-            Ok(UpdatedLexer(final_identifier, lexer |> adapt_to_position(lexer.position + string.length(final_identifier))))
+            Ok(UpdatedLexer(final_identifier, lexer |> adapt_to_position(new_position)))
         }
     }
 }
