@@ -20,6 +20,12 @@ pub const semicolon = TokenType(";")
 pub const var = TokenType("let")
 pub const int = TokenType("int")
 pub const func = TokenType("func")
+pub const bang = TokenType("!")
+pub const minus = TokenType("-")
+pub const slash = TokenType("/")
+pub const asterisk = TokenType("*")
+pub const lt = TokenType("<")
+pub const gt = TokenType(">")
 
 pub const ident = TokenType("ident")
 pub const illegal = TokenType("illegal")
@@ -36,7 +42,13 @@ const keyword_token_types = [
     semicolon,
     var,
     int,
-    func
+    func,
+    bang,
+    minus,
+    slash,
+    asterisk,
+    lt,
+    gt
 ]
 
 pub fn find_identifier(identifier: String) -> TokenType {

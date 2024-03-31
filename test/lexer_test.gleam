@@ -85,6 +85,30 @@ let result = add(five, ten);"
     |> list.fold(lexer.new(input), test_case)
 }
 
+pub fn next_token_3_test() {
+    let input = "!-/*5;
+5 < 10 > 5;
+"
+
+    let tests = [
+        LexerTest(token.bang, "!"),
+        LexerTest(token.minus, "-"),
+        LexerTest(token.slash, "/"),
+        LexerTest(token.asterisk, "*"),
+        LexerTest(token.int, "5"),
+        LexerTest(token.semicolon, ";"),
+        LexerTest(token.int, "5"),
+        LexerTest(token.lt, "<"),
+        LexerTest(token.int, "10"),
+        LexerTest(token.gt, ">"),
+        LexerTest(token.int, "5"),
+        LexerTest(token.semicolon, ";"),
+    ]
+
+    tests
+    |> list.fold(lexer.new(input), test_case)
+}
+
 fn test_case(lexer: Lexer, test_case: LexerTest) -> Lexer {
     let updated_lexer = lexer |> lexer.next_token()
     let actual_token = updated_lexer.data
