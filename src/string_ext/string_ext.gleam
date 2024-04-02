@@ -11,12 +11,12 @@ pub fn is_digit(value: String) -> Bool {
     }
 }
 
-const tab = 9
-const lf = 10
-const cr = 13
-const space = 32
-
 pub fn is_whitespace(value: String) -> Bool {
+    let tab = 9
+    let lf = 10
+    let cr = 13
+    let space = 32
+
     case value |> string.to_utf_codepoints {
         [char] -> {
             let char_as_int: Int = char |> string.utf_codepoint_to_int
