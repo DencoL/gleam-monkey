@@ -1,11 +1,11 @@
 import gleam/list
 
 pub type TokenType {
-    TokenType(value: String)
+  TokenType(value: String)
 }
 
 pub type Token {
-    Token(token_type: TokenType, literal: String)
+  Token(token_type: TokenType, literal: String)
 }
 
 pub const eof = TokenType("eof")
@@ -31,39 +31,39 @@ pub const ident = TokenType("ident")
 pub const illegal = TokenType("illegal")
 
 const atomics = [
-    assign,
-    plus,
-    l_paren,
-    r_paren,
-    l_brace,
-    r_brace,
-    comma,
-    semicolon,
-    int,
-    bang,
-    minus,
-    slash,
-    asterisk,
-    lt,
-    gt
+  assign,
+  plus,
+  l_paren,
+  r_paren,
+  l_brace,
+  r_brace,
+  comma,
+  semicolon,
+  int,
+  bang,
+  minus,
+  slash,
+  asterisk,
+  lt,
+  gt
 ]
 
 const keyword_token_types = [
-    eof,
-    var,
-    func
+  eof,
+  var,
+  func
 ]
 
 pub fn find_identifier(identifier: String) -> TokenType {
-    case identifier {
-        "let" -> var
-        "fn" -> func
-        _ -> ident
-    }
+  case identifier {
+    "let" -> var
+    "fn" -> func
+    _ -> ident
+  }
 }
 
 pub fn find_keyword_token(token: String) -> Result(TokenType, Nil) {
-    keyword_token_types
-    |> list.append(atomics)
-    |> list.find(fn(token_type) { token_type.value == token }) 
+  keyword_token_types
+  |> list.append(atomics)
+  |> list.find(fn(token_type) { token_type.value == token }) 
 }
