@@ -86,7 +86,7 @@ let result = add(five, ten);"
 }
 
 pub fn next_token_3_test() {
-  let input = "!-/*5;
+  let input = "!-/#*5;
 5 < 10 > 5;
 "
 
@@ -94,6 +94,7 @@ pub fn next_token_3_test() {
     LexerTest(token.bang, "!"),
     LexerTest(token.minus, "-"),
     LexerTest(token.slash, "/"),
+    LexerTest(token.illegal, "#"),
     LexerTest(token.asterisk, "*"),
     LexerTest(token.int, "5"),
     LexerTest(token.semicolon, ";"),
