@@ -119,13 +119,13 @@ fn read_continuous(
   identify_continuity: fn(String) -> Bool
 ) -> Result(UpdatedLexer(String), Nil) {
   let final_identifier_builder =
-      lexer.input
-      |> list.drop(lexer.position)
-      |> list.fold_until(string_builder.new(), fn(acc, char) {
-        case char |> identify_continuity {
-          True -> Continue(acc |> string_builder.append(char))
-          False -> Stop(acc) 
-        }
+    lexer.input
+    |> list.drop(lexer.position)
+    |> list.fold_until(string_builder.new(), fn(acc, char) {
+      case char |> identify_continuity {
+        True -> Continue(acc |> string_builder.append(char))
+        False -> Stop(acc) 
+      }
   })
 
   case final_identifier_builder |> string_builder.is_empty {
