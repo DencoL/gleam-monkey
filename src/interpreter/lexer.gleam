@@ -80,7 +80,7 @@ fn try_token(
   lexer: Lexer
 ) -> Option(UpdatedLexer(Token)) {
   keyword_token
-  |> option.then(fn(_) {
+  |> option.lazy_or(fn() {
       lexer |> token_identify_fun |> option.map(fn(updated_lexer) { 
       UpdatedLexer(
           Token(lookup_identifier(updated_lexer.data), updated_lexer.data),
