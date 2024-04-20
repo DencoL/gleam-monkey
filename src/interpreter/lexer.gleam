@@ -74,12 +74,12 @@ fn try_keyword_token(
 }
 
 fn try_token(
-  failed_keyword_token_result: Option(UpdatedLexer(Token)),
+  keyword_token: Option(UpdatedLexer(Token)),
   token_identify_fun: fn(Lexer) -> Option(UpdatedLexer(String)),
   lookup_identifier: fn(String) -> TokenType,
   lexer: Lexer
 ) -> Option(UpdatedLexer(Token)) {
-  failed_keyword_token_result
+  keyword_token
   |> option.then(fn(_) {
       lexer |> token_identify_fun |> option.map(fn(updated_lexer) { 
       UpdatedLexer(
