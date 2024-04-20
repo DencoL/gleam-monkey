@@ -1,4 +1,5 @@
 import gleam/list
+import gleam/option.{type Option}
 
 pub type TokenType {
   TokenType(value: String)
@@ -62,8 +63,9 @@ pub fn find_identifier(identifier: String) -> TokenType {
   }
 }
 
-pub fn find_keyword_token(token: String) -> Result(TokenType, Nil) {
+pub fn find_keyword_token(token: String) -> Option(TokenType) {
   keyword_token_types
   |> list.append(atomics)
   |> list.find(fn(token_type) { token_type.value == token }) 
+  |> option.from_result
 }

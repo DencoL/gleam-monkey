@@ -1,6 +1,7 @@
 import gleam/list.{Continue, Stop}
 import gleam/string
 import gleam/result
+import gleam/option.{type Option, None, Some}
 import gleam/string_builder
 import interpreter/token.{type Token, Token, type TokenType}
 import string_ext/string_ext
@@ -63,40 +64,38 @@ fn skip_whitespace(lexer: Lexer) -> Lexer {
 }
 
 fn try_keyword_token(
-  keyword_token_result: Result(TokenType, Nil),
+  keyword_token: Option(TokenType),
   lexer: Lexer
-) -> Result(UpdatedLexer(Token), Nil) {
-  keyword_token_result 
-  |> result.map(fn(found_keyword_token_type) {
+) -> Option(UpdatedLexer(Token)) {
+  keyword_token 
+  |> option.map(fn(found_keyword_token_type) {
     UpdatedLexer(Token(found_keyword_token_type, lexer.current_ch), lexer |> read_char())
   })
 }
 
 fn try_token(
-  failed_keyword_token_result: Result(UpdatedLexer(Token), Nil),
-  token_identify_fun: fn(Lexer) -> Result(UpdatedLexer(String), Nil),
+  failed_keyword_token_result: Option(UpdatedLexer(Token)),
+  token_identify_fun: fn(Lexer) -> Option(UpdatedLexer(String)),
   lookup_identifier: fn(String) -> TokenType,
   lexer: Lexer
-) -> Result(UpdatedLexer(Token), Nil) {
+) -> Option(UpdatedLexer(Token)) {
   failed_keyword_token_result
-  |> result.try_recover(fn(_) {
-    lexer
-    |> token_identify_fun
-    |> result.map(fn(updated_lexer) { 
+  |> option.then(fn(_) {
+      lexer |> token_identify_fun |> option.map(fn(updated_lexer) { 
       UpdatedLexer(
-        Token(lookup_identifier(updated_lexer.data), updated_lexer.data),
-        updated_lexer.lexer
-      )
-    })
+          Token(lookup_identifier(updated_lexer.data), updated_lexer.data),
+          updated_lexer.lexer
+        )
+      })
   })
 }
 
 fn eof_or_illegal(
-  failed_result: Result(UpdatedLexer(Token),
-  Nil), lexer: Lexer
+  failed_result: Option(UpdatedLexer(Token)),
+  lexer: Lexer
 ) -> UpdatedLexer(Token) {
   failed_result
-  |> result.lazy_unwrap(fn() {
+  |> option.lazy_unwrap(fn() {
     let token = case lexer.current_ch {
       "" -> Token(token.eof, "")
       _ -> Token(token.illegal, lexer.current_ch)
@@ -106,18 +105,18 @@ fn eof_or_illegal(
   })
 }
 
-fn read_ident(lexer: Lexer) -> Result(UpdatedLexer(String), Nil) {
+fn read_ident(lexer: Lexer) -> Option(UpdatedLexer(String)) {
   lexer |> read_continuous(string_ext.is_letter)
 }
 
-fn read_number(lexer: Lexer) -> Result(UpdatedLexer(String), Nil) {
+fn read_number(lexer: Lexer) -> Option(UpdatedLexer(String)) {
   lexer |> read_continuous(string_ext.is_digit)
 }
 
 fn read_continuous(
   lexer: Lexer,
   identify_continuity: fn(String) -> Bool
-) -> Result(UpdatedLexer(String), Nil) {
+) -> Option(UpdatedLexer(String)) {
   let final_identifier_builder =
     lexer.input
     |> list.drop(lexer.position)
@@ -129,12 +128,12 @@ fn read_continuous(
   })
 
   case final_identifier_builder |> string_builder.is_empty {
-    True -> Error(Nil)
+    True -> None
     False -> {
       let final_identifier = final_identifier_builder |> string_builder.to_string
       let new_position = lexer.position + string.length(final_identifier)
 
-      Ok(UpdatedLexer(final_identifier, lexer |> adapt_to_position(new_position)))
+      Some(UpdatedLexer(final_identifier, lexer |> adapt_to_position(new_position)))
     }
   }
 }
